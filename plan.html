@@ -6,6 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="styledas.css" />
 </head>
+<script>
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.menu-btn');
+      if (!btn) return;
+      const href = btn.getAttribute('data-href');
+      if (href) window.location.href = href;
+    });
+  </script>
+  
 <body class="has-sidebar">
 
   <!-- Sidebar -->
@@ -91,20 +100,4 @@
           <!-- ตัวอย่าง item -->
           <li class="plan-item">
             <div class="plan-info">
-              <span class="plan-title">อ่านบทที่ 5 วิชาคณิต</span>
-              <span class="plan-date">กำหนดส่ง: 2025-10-10</span>
-            </div>
-            <div class="plan-actions">
-              <button class="btn tiny">✏️</button>
-              <button class="btn tiny success">✅</button>
-              <button class="btn tiny danger">🗑️</button>
-            </div>
-          </li>
-        </ul>
-      </section>
-    </div>
-  </main>
-
-  <script src="planned.js"></script>
-</body>
-</html>
+              <span class="plan-title
