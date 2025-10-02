@@ -40,7 +40,7 @@
   </li>
 
   <li class="menu-item">
-    <button class="menu-btn" data-href="done.html">
+    <button class="menu-btn" data-href="success.html">
       <span class="icon">✅</span>
       <span class="label">สำเร็จเสร็จสิ้น</span>
     </button>
@@ -54,12 +54,18 @@
       <span class="label">เพิ่มแผนงาน</span>
     </button>
   </li>
-  <div class="sidebar-profile">
+  <div class="sidebar-profile" id="sidebarProfile">
     <img src="โปร.jpg" alt="Profile" class="avatar" />
     <div class="profile-meta">
       <div class="profile-name">My Profile</div>
       <div class="profile-sub">พร้อมลุยวันนี้ ✨</div>
     </div>
+    <script>
+      document.getElementById("sidebarProfile").addEventListener("click", () => {
+        window.location.href = "user.html";
+      });
+    </script>
+
   </div>
           <button class="icon-btn logout-icon" id="logoutBtn" title="ออกจากระบบ" aria-label="Logout">🚪</button>
         </div>

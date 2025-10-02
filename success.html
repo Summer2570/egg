@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>สำเร็จแล้ว</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f172a;         /* slate-900 */
+      --panel:#111827;      /* gray-900 */
+      --muted:#94a3b8;      /* slate-400 */
+      --text:#e5e7eb;       /* gray-200 */
+      --brand:#22c55e;      /* green-500 */
+      --brand-600:#16a34a;  /* green-600 */
+      --ring: rgba(34,197,94,.35);
+      --card:#0b1220;       /* deep panel */
+      --shadow: 0 20px 35px rgba(0,0,0,.45), 0 8px 14px rgba(34,197,94,.12);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Kanit', system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(34,197,94,.08), transparent 60%),
+        radial-gradient(1200px 600px at -10% 100%, rgba(59,130,246,.08), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      display:flex; align-items:center; justify-content:center; padding:32px;
+    }
+    .shell{max-width:720px; width:100%;}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:28px; padding:32px; box-shadow:var(--shadow);
+      position:relative; overflow:hidden;
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px;
+      background:rgba(34,197,94,.12); color:#bbf7d0; border:1px solid rgba(34,197,94,.35);
+      font-size:13px; letter-spacing:.2px;
+    }
+    .check{
+      width:56px; height:56px; border-radius:50%;
+      display:grid; place-items:center; margin:14px 0 6px; flex-shrink:0;
+      background: radial-gradient(circle at 30% 30%, rgba(34,197,94,.35), rgba(34,197,94,.15)), rgba(34,197,94,.15);
+      border:1px solid rgba(34,197,94,.35);
+      box-shadow: 0 8px 24px rgba(34,197,94,.25), inset 0 0 0 6px rgba(34,197,94,.08);
+    }
+    .check svg{display:block}
+    h1{margin:10px 0 8px; font-size: clamp(26px, 3.6vw, 36px); line-height:1.15}
+    p{margin:0; color:var(--muted); font-size:16px}
+
+    .grid{display:grid; grid-template-columns:1fr; gap:16px; margin-top:22px}
+    @media (min-width:640px){ .grid{grid-template-columns:1fr 1fr} }
+
+    .info{
+      background:var(--card); border:1px dashed rgba(148,163,184,.25); border-radius:18px; padding:16px 18px;
+    }
+    .info h3{margin:0 0 6px; font-size:15px; color:#cbd5e1;}
+    .info .row{display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--muted); font-size:14px}
+
+    .actions{margin-top:24px; display:flex; gap:12px; flex-wrap:wrap}
+    .btn{
+      appearance:none; border:none; cursor:pointer; text-decoration:none;
+      padding:14px 18px; border-radius:14px; font-weight:600; font-size:15px; letter-spacing:.2px;
+      display:inline-flex; align-items:center; gap:10px; transition:transform .08s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .btn.primary{background:var(--brand); color:#052e16; box-shadow:0 8px 20px rgba(34,197,94,.25)}
+    .btn.primary:hover{background:var(--brand-600); transform:translateY(-1px)}
+    .btn.ghost{background:transparent; color:var(--text); border:1px solid rgba(148,163,184,.25)}
+    .btn.ghost:hover{background:rgba(148,163,184,.08)}
+
+    .mini-note{margin-top:10px; font-size:13px; color:var(--muted)}
+
+    /* Decorative flare */
+    .glow{
+      position:absolute; inset:-40px; pointer-events:none; filter: blur(40px); opacity:.35;
+      background: conic-gradient(from 180deg at 50% 50%, rgba(34,197,94,.18), rgba(59,130,246,.14), rgba(168,85,247,.12), rgba(34,197,94,.18));
+      mask: radial-gradient(closest-side, #000 60%, transparent 80%);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="card">
+      <div class="glow" aria-hidden="true"></div>
+
+      <span class="badge" aria-label="แบบแผนบันทึกแล้ว">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z" stroke="currentColor" stroke-opacity=".6"/>
+          <path d="m7 12 3 3 7-7" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        สำเร็จเสร็จสิ้น
+      </span>
+
+      <div class="check" role="img" aria-label="สำเร็จ">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M20 7 9 18l-5-5" stroke="#052e16" stroke-width="2.5"/>
+        </svg>
+      </div>
+
+      <h1>บันทึกแผนของคุณเรียบร้อยแล้ว 🎉</h1>
+      <p>ข้อมูลถูกบันทึกสำเร็จ คุณสามารถกลับไปหน้าแรกเพื่อดูภาพรวม หรือเปิดดูรายละเอียดแผนที่เพิ่งสร้างได้ทันที</p>
+
+      <div class="grid">
+        <div class="info">
+          <h3>ขั้นตอนถัดไป</h3>
+          <div class="row"><span>ปรับแก้รายละเอียดแผน</span><span>— เมื่อไรก็ได้</span></div>
+          <div class="row"><span>ตั้งการแจ้งเตือน</span><span>— เพื่อไม่พลาดกำหนด</span></div>
+        </div>
+        <div class="info">
+          <h3>สรุปย่อ</h3>
+          <div class="row"><span>สถานะ</span><span>บันทึกแล้ว</span></div>
+          <div class="row"><span>เวลา</span><span><span id="now">—</span></span></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <!-- ใช้ <a> เพื่อให้นำทางได้ทันทีโดยไม่พึ่ง JS -->
+        <a class="btn primary" href="dashboard.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5" stroke="#052e16" stroke-width="2"/></svg>
+          ไปหน้าแดชบอร์ด
+        </a>
+        <a class="btn ghost" href="plan.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7" stroke="currentColor" stroke-width="2"/></svg>
+          ดูแผนของฉัน
+        </a>
+      </div>
+
+      <div class="mini-note">เคล็ดลับ: คุณสามารถปักหมุดหน้านี้ไว้หลังบันทึกทุกครั้ง เพื่อยืนยันว่าแผนถูกส่งเรียบร้อยแล้ว</div>
+    </div>
+  </div>
+
+  <script>
+    // แสดงเวลาปัจจุบันในกล่องสรุป
+    (function(){
+      const el = document.getElementById('now');
+      try{
+        const d = new Date();
+        const fmt = new Intl.DateTimeFormat('th-TH', { dateStyle:'long', timeStyle:'short' });
+        el.textContent = fmt.format(d);
+      }catch{ el.textContent = new Date().toLocaleString(); }
+    })();
+
+    // รองรับปุ่ม .menu-btn แบบเดียวกับในหน้าอื่น ๆ ถ้ามีใช้ pattern data-href
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.menu-btn');
+      if (!btn) return;
+      const href = btn.getAttribute('data-href');
+      if (href) window.location.href = href;
+    });
+  </script>
+</body>
+</html>
