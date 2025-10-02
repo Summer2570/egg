@@ -2,40 +2,126 @@
 <html lang="th" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <title>ที่วางแผนไว้ — StudyBoard</title>
+  <title>แผนการอ่านหนังสือ — StudyBoard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="styledas.css" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --card-bg: #f9fafb;
+      --border: #e5e7eb;
+      --accent: #3b82f6;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warn: #f59e0b;
+    }
+    html[data-theme="dark"] {
+      --bg: #0b1220;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --card-bg: #0f172a;
+      --border: #1f2937;
+      --accent: #60a5fa;
+      --danger: #f87171;
+      --success: #34d399;
+      --warn: #fbbf24;
+    }
+
+    body { background: var(--bg); color: var(--text); }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .muted { color: var(--muted); }
+
+    /* ---- ปุ่มน่ารัก โค้งมน + เงาอ่อน (เพิ่มใหม่) ---- */
+    .btn {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 8px 14px;
+      cursor: pointer;
+      background: var(--accent);
+      color:#fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      transition: transform .06s ease, box-shadow .12s ease, background-color .12s ease, filter .12s ease;
+    }
+    .btn.tiny { font-size: 12px; padding: 6px 12px; border-radius: 14px; }
+    .btn.ghost { background: rgba(0,0,0,0.02); color: var(--text); }
+    html[data-theme="dark"] .btn.ghost { background: rgba(255,255,255,0.06); }
+    .btn.success { background: var(--success); border-color: var(--success); }
+    .btn.danger  { background: var(--danger);  border-color: var(--danger); }
+    .btn.warn    { background: var(--warn);    border-color: var(--warn); }
+
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.08); filter: brightness(1.04); }
+    .btn:active { transform: translateY(0); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+    .icon-btn, .menu-btn { color: var(--text); }
+
+    .opt.grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 8px; align-items: start;
+    }
+    .controls.grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px; align-items: center;
+    }
+    .plan-list { list-style: none; margin: 0; padding: 0; }
+    .plan-item { display: flex; justify-content: space-between; align-items: stretch; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .plan-item:last-child { border-bottom: none; }
+    .plan-info { flex: 1; }
+    .row1 { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+    .row2 { margin-top: 4px; }
+    .plan-item.done .plan-title { text-decoration: line-through; opacity: .6; }
+    .plan-actions { display: flex; gap: 10px; padding-right: 6px; } /* กันโดนตัดขอบขวา */
+    .plan-actions .btn { min-width: 82px; border-radius: 16px; }   /* ไม่ให้บีบจนตัวอักษรหาย */
+
+    .inline-edit { border-bottom: 1px dashed var(--border); cursor: text; }
+    .tag { padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; font-size: 12px; }
+    .tag.prio-สูง { background: rgba(245,158,11,.15); border-color: var(--warn); }
+    .tag.prio-ด่วนมาก { background: rgba(239,68,68,.15); border-color: var(--danger);}
+
+    .stat { display:flex; gap: 12px; flex-wrap: wrap; }
+    .stat .chip { background: var(--card-bg); border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; }
+
+    input[type="search"], select, input[type="date"], input[type="text"], textarea {
+      background: transparent; border: 1px solid var(--border); color: var(--text);
+      border-radius: 10px; padding: 6px 10px;
+    }
+    textarea { resize: vertical; }
+
+    .empty { color: var(--muted); padding: 12px 0; }
+
+    /* ป้องกันการถูกตัดมุมจาก container */
+    .plan-item, .plan-actions, .card { overflow: visible; }
+  </style>
 </head>
+
 <script>
-    document.addEventListener('click', function (e) {
-      const btn = e.target.closest('.menu-btn');
-      if (!btn) return;
-      const href = btn.getAttribute('data-href');
-      if (href) window.location.href = href;
-    });
-  </script>
-  
+  // เมนูนำทางจาก sidebar
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.menu-btn');
+    if (!btn) return;
+    const href = btn.getAttribute('data-href');
+    if (href) window.location.href = href;
+  });
+</script>
+
 <body class="has-sidebar">
 
   <!-- Sidebar -->
   <aside class="sidebar" aria-label="แถบเมนูด้านข้าง">
-    <!-- ปุ่มย่อ/ขยาย -->
     <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
     
-    <!-- Tools: Theme + Profile -->
     <div class="sidebar-tools">
-      <!-- ปุ่มสลับธีม -->
-      <button class="menu-btn theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme">
-        <span class="icon">🌓</span>
-        <span class="label">สลับธีม</span>
+      <button class="menu-btn theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme" aria-pressed="false">
+        <span class="icon" id="themeIcon">🌓</span>
+        <span class="label" id="themeLabel">สลับธีม</span>
       </button>
 
-      <!-- โปรไฟล์ + Logout -->
       <div class="sidebar-profile" id="sidebarProfile">
         <img src="โปร.jpg" alt="Profile" class="avatar" />
         <div class="profile-meta">
           <div class="profile-name">My Profile</div>
-          <div class="profile-sub">พร้อมลุยวันนี้ ✨</div>
+          <div class="profile-sub">อ่านทุกวัน ทีละนิด 📚</div>
         </div>
       </div>
 
@@ -48,8 +134,7 @@
       <button class="icon-btn logout-icon" id="logoutBtn" title="ออกจากระบบ" aria-label="Logout">🚪</button>
     </div>
 
-    <!-- เมนูหลัก -->
-    <div class="sidebar-title">แผนงาน</div>
+    <div class="sidebar-title">แผนการอ่าน</div>
     <ul class="menu">
       <li class="menu-item">
         <button class="menu-btn" data-href="dashboard.html">
@@ -57,27 +142,23 @@
           <span class="label">หน้าแรก</span>
         </button>
       </li>
-
       <li class="menu-item">
-        <button class="menu-btn" data-href="plan.html">
-          <span class="icon">🗒️</span>
-          <span class="label">ที่วางแผนไว้</span>
+        <button class="menu-btn" data-href="reading-plan.html">
+          <span class="icon">📚</span>
+          <span class="label">แผนการอ่าน</span>
         </button>
       </li>
-
       <li class="menu-item">
         <button class="menu-btn" data-href="success.html">
           <span class="icon">✅</span>
-          <span class="label">สำเร็จเสร็จสิ้น</span>
+          <span class="label">อ่านเสร็จแล้ว</span>
         </button>
       </li>
-
       <li class="menu-sep"></li>
-
       <li class="menu-item add">
-        <button class="btn tiny success menu-btn" data-href="new-plan.html">
+        <button class="btn tiny success menu-btn" data-href="new-reading.html">
           <span class="icon">➕</span>
-          <span class="label">เพิ่มแผนงาน</span>
+          <span class="label">เพิ่มหัวข้ออ่าน</span>
         </button>
       </li>
     </ul>
@@ -86,25 +167,343 @@
   <!-- Main -->
   <main class="main">
     <header class="topbar">
-      <h1>📌 ที่วางแผนไว้</h1>
+      <h1>📌 แผนการอ่านหนังสือ</h1>
     </header>
 
     <div class="container">
-      <!-- เพิ่มแผนใหม่ -->
-      <section class="card add-plan">
-        <h2>➕ เพิ่มแผนใหม่</h2>
-        <div class="opt">
-          <input type="text" id="planTitle" placeholder="ชื่อแผนงาน..." />
-          <input type="date" id="planDate" />
-          <button class="btn success tiny" id="addPlanBtn">บันทึก</button>
+      <!-- แถบควบคุม -->
+      <section class="card">
+        <div class="controls grid">
+          <input type="search" id="q" placeholder="🔎 ค้นหาชื่อเรื่อง/โน้ต/วิชา…" />
+          <select id="fPriority">
+            <option value="">กรอง: ทุกความสำคัญ</option>
+            <option>ปกติ</option><option>สูง</option><option>ด่วนมาก</option>
+          </select>
+          <input type="text" id="fSubject" placeholder="กรอง: วิชา (เช่น ฟิสิกส์)" />
+          <select id="sortBy">
+            <option value="date-asc">📅 วันที่ (เก่า→ใหม่)</option>
+            <option value="date-desc">📅 วันที่ (ใหม่→เก่า)</option>
+            <option value="prio-desc">⭐ ความสำคัญ (ด่วนมากก่อน)</option>
+            <option value="title-asc">🔤 ชื่อเรื่อง (ก-ฮ)</option>
+          </select>
+          <div style="display:flex; gap:8px;">
+            <button class="btn ghost tiny" id="clearFilters">🧹 ล้างตัวกรอง</button>
+            <button class="btn warn tiny" id="exportBtn">📤 Export</button>
+            <label class="btn ghost tiny" for="importFile">📥 Import</label>
+            <input type="file" id="importFile" accept=".json,application/json" style="display:none" />
+          </div>
         </div>
       </section>
 
-      <!-- รายการแผนงาน -->
+      <!-- เพิ่มแผนใหม่ -->
+      <section class="card add-plan">
+        <h2>➕ เพิ่มแผนการอ่าน</h2>
+        <div class="opt grid">
+          <input type="text" id="bookTitle" placeholder="📖 ชื่อหนังสือ/บท/หัวข้อ..." aria-label="ชื่อหนังสือหรือหัวข้อ" />
+          <input type="date" id="planDate" aria-label="วันที่จะอ่าน" />
+        
+          <select id="priority" aria-label="ความสำคัญ">
+            <option value="ปกติ">⭐ ความสำคัญ: ปกติ</option>
+            <option value="สูง">🔥 ความสำคัญ: สูง</option>
+            <option value="ด่วนมาก">🚨 ความสำคัญ: ด่วนมาก</option>
+          </select>
+          <input type="text" id="subject" placeholder="🏷️ วิชา/หมวด (เช่น ฟิสิกส์, อังกฤษ)" aria-label="วิชาหรือหมวด" />
+          <textarea id="notes" rows="2" placeholder="📝 รายละเอียดเพิ่มเติม เช่น หน้าที่ 25–35, โจทย์บทที่ 2"></textarea>
+
+          <button class="btn success tiny" id="addPlanBtn">✅ บันทึก</button>
+        </div>
+      </section>
+
+      <!-- สรุปสถิติ -->
       <section class="card">
-        <h2>📋 รายการแผนงาน</h2>
-        <ul class="plan-list" id="planList">
-          <!-- ตัวอย่าง item -->
-          <li class="plan-item">
-            <div class="plan-info">
-              <span class="plan-title
+        <div class="stat" id="stats"></div>
+      </section>
+
+      <!-- รายการแผนการอ่าน -->
+      <section class="card">
+        <h2>📋 รายการแผนการอ่าน</h2>
+        <ul class="plan-list" id="planList"></ul>
+      </section>
+    </div>
+  </main>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  /* ================== THEME ================== */
+  const themeToggle = document.getElementById("themeToggle");
+  const themeIcon   = document.getElementById("themeIcon");
+  const themeLabel  = document.getElementById("themeLabel");
+  const THEME_KEY = "sb_theme";
+  function getPreferredTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    const isDark = theme === "dark";
+    themeToggle.setAttribute("aria-pressed", String(isDark));
+    themeIcon.textContent = isDark ? "🌙" : "🌞";
+    themeLabel.textContent = isDark ? "ธีมสว่าง" : "สลับธีม";
+  }
+  applyTheme(getPreferredTheme());
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  media.addEventListener?.("change", e => { if (!localStorage.getItem(THEME_KEY)) applyTheme(e.matches ? "dark" : "light"); });
+  themeToggle.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme") || "light";
+    const next = current === "light" ? "dark" : "light";
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+  });
+
+  /* ================== ELEMENTS ================== */
+  const titleEl = document.getElementById("bookTitle");
+  const dateEl  = document.getElementById("planDate");
+  const prioEl  = document.getElementById("priority");
+  const subjEl  = document.getElementById("subject");
+  const notesEl = document.getElementById("notes");
+  const addBtn  = document.getElementById("addPlanBtn");
+
+  const listEl  = document.getElementById("planList");
+  const qEl = document.getElementById("q");
+  const fPriorityEl = document.getElementById("fPriority");
+  const fSubjectEl = document.getElementById("fSubject");
+  const sortEl = document.getElementById("sortBy");
+  const statsEl = document.getElementById("stats");
+  const exportBtn = document.getElementById("exportBtn");
+  const importFile = document.getElementById("importFile");
+
+  /* ================== STORAGE ================== */
+  const STORAGE_KEY = "studyboard_reading_plans";
+  const META_KEY = "studyboard_meta";
+  let plans = []; try { plans = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch {}
+  let meta = { streakDays: 0, lastReadDate: null }; try { meta = Object.assign(meta, JSON.parse(localStorage.getItem(META_KEY)) || {}); } catch {}
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(plans)); }
+  function saveMeta() { localStorage.setItem(META_KEY, JSON.stringify(meta)); }
+
+  /* ================== UTIL ================== */
+  function formatDate(iso) { if (!iso) return ""; const [y,m,d] = iso.split("-"); return `${d}/${m}/${y}`; }
+  function escapeHtml(s) { const t=document.createElement("div"); t.innerText=s; return t.innerHTML; }
+  function prioRank(p){ return p==="ด่วนมาก" ? 3 : p==="สูง" ? 2 : 1; }
+  function todayISO(){ const now=new Date(); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,"0"); const d=String(now.getDate()).padStart(2,"0"); return `${y}-${m}-${d}`; }
+  function dayDiff(isoA, isoB){ const a = new Date(isoA+"T00:00:00"); const b = new Date(isoB+"T00:00:00"); return Math.round((b - a) / (24*3600*1000)); }
+
+  /* ================== RENDER ================== */
+  function renderStats(view) {
+    const today = todayISO();
+    const todayCount = view.filter(p => p.date === today).length;
+    const weekWindow = 7 * 24 * 60 * 60 * 1000;
+    const nowTs = Date.now();
+    const weekCount = view.filter(p => {
+      if (!p.date) return false;
+      const ts = Date.parse(p.date + "T00:00:00");
+      return nowTs - ts <= weekWindow;
+    }).length;
+    const doneCount = view.filter(p => p.done).length;
+    const allCount = view.length;
+    statsEl.innerHTML = `
+      <span class="chip">📅 วันนี้: <b>${todayCount}</b> เรื่อง</span>
+      <span class="chip">🗓️ 7 วันล่าสุด: <b>${weekCount}</b> เรื่อง</span>
+      <span class="chip">✅ เสร็จแล้ว: <b>${doneCount}</b> / ${allCount}</span>
+      <span class="chip">🔥 Streak การอ่าน: <b>${meta.streakDays}</b> วันต่อเนื่อง</span>
+    `;
+  }
+
+  function render() {
+    // กรอง
+    let view = plans.filter(p => {
+      const q = (qEl.value || "").toLowerCase();
+      const inText = !q || [p.title, p.subject, p.notes].some(v => (v||"").toLowerCase().includes(q));
+      const prioOk = !fPriorityEl.value || p.priority === fPriorityEl.value;
+      const subjOk = !fSubjectEl.value || (p.subject || "").toLowerCase().includes(fSubjectEl.value.toLowerCase());
+      return inText && prioOk && subjOk;
+    });
+    // จัดลำดับ
+    const sort = sortEl.value || "date-asc";
+    view.sort((a,b)=>{
+      if (sort === "date-asc")  return (a.date||"") > (b.date||"") ? 1 : -1;
+      if (sort === "date-desc") return (a.date||"") < (b.date||"") ? 1 : -1;
+      if (sort === "prio-desc") return prioRank(b.priority) - prioRank(a.priority);
+      if (sort === "title-asc") return (a.title||"").localeCompare((b.title||""), "th");
+      return 0;
+    });
+    // สถิติ
+    renderStats(view);
+
+    // รายการ
+    listEl.innerHTML = "";
+    if (view.length === 0) { listEl.innerHTML = `<li class="empty">😴 ไม่พบรายการที่ตรงเงื่อนไข</li>`; return; }
+
+    view.forEach(p => {
+      const idx = plans.indexOf(p);
+      const li = document.createElement("li");
+      li.className = "plan-item" + (p.done ? " done" : "");
+
+      li.innerHTML = `
+        <div class="plan-info">
+          <div class="row1">
+            <span class="plan-title inline-edit" data-field="title" data-idx="${idx}">📖 ${escapeHtml(p.title)}</span>
+            <span class="plan-date inline-edit" data-field="date" data-idx="${idx}">🗓️ ${formatDate(p.date)}</span>
+            <span class="tag prio-${escapeHtml(p.priority)} inline-edit" data-field="priority" data-idx="${idx}">⭐ ${escapeHtml(p.priority||"ปกติ")}</span>
+            ${p.subject ? `<span class="tag inline-edit" data-field="subject" data-idx="${idx}">🏷️ ${escapeHtml(p.subject)}</span>` : `<span class="tag inline-edit" data-field="subject" data-idx="${idx}">🏷️ +วิชา</span>`}
+          </div>
+          ${p.notes ? `<div class="row2 inline-edit" data-field="notes" data-idx="${idx}">📝 ${escapeHtml(p.notes)}</div>` : `<div class="row2 inline-edit muted" data-field="notes" data-idx="${idx}">📝 เพิ่มโน้ต…</div>`}
+        </div>
+        <div class="plan-actions">
+          <button class="btn tiny"       data-action="done" data-idx="${idx}" aria-label="${p.done ? "ยกเลิกเสร็จ" : "เสร็จแล้ว"}">
+            ${p.done ? "↩️ ยกเลิกเสร็จ" : "✅ เสร็จแล้ว"}
+          </button>
+          <button class="btn tiny ghost" data-action="copy" data-idx="${idx}" aria-label="ทำซ้ำ">
+            🔁 ทำซ้ำ
+          </button>
+          <button class="btn tiny danger" data-action="del" data-idx="${idx}" aria-label="ลบ">
+            🗑️ ลบ
+          </button>
+        </div>
+      `;
+      listEl.appendChild(li);
+    });
+  }
+
+  /* ================== ADD ================== */
+  addBtn.addEventListener("click", async () => {
+    const title = (titleEl.value || "").trim();
+    const date  = (dateEl.value  || "").trim();
+    const priority = prioEl.value || "ปกติ";
+    const subject  = (subjEl.value  || "").trim();
+    const notes    = (notesEl.value || "").trim();
+
+    if (!title) { alert("กรุณาใส่ชื่อหนังสือ/หัวข้อ ✍️"); titleEl.focus(); return; }
+    if (!date)  { alert("กรุณาเลือกวันที่ 📅"); dateEl.focus(); return; }
+
+    const newItem = { title, date, priority, subject, notes, done: false, createdAt: Date.now() };
+
+    plans.push(newItem);
+    save();
+
+    // reset ฟอร์ม
+    titleEl.value = ""; dateEl.value = ""; prioEl.value = "ปกติ"; subjEl.value = ""; notesEl.value = "";
+    render();
+  });
+
+  /* ================== LIST ACTIONS ================== */
+  listEl.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.action;
+
+    if (act === "del") {
+      if (confirm("ต้องการลบรายการนี้หรือไม่? 🗑️")) { plans.splice(idx, 1); save(); render(); }
+      return;
+    }
+    if (act === "done") {
+      const next = !plans[idx].done;
+      plans[idx].done = next;
+      save();
+      if (next) updateStreakIfRead(plans[idx].date); // นับ streak เมื่อกดเสร็จแล้ว
+      render();
+      return;
+    }
+    if (act === "copy") {
+      const p = plans[idx];
+      const copy = { ...p, done:false, createdAt: Date.now() };
+      plans.push(copy); save(); render(); return;
+    }
+  });
+
+  /* ================== INLINE EDIT ================== */
+  listEl.addEventListener("dblclick", (e) => {
+    const el = e.target.closest(".inline-edit");
+    if (!el) return;
+    const idx = Number(el.dataset.idx);
+    const field = el.dataset.field;
+    const p = plans[idx];
+    let val = "";
+
+    if (field === "title") {
+      val = prompt("ชื่อเรื่อง/หัวข้อ ✍️:", p.title || "");
+      if (val !== null) p.title = val.trim();
+    } else if (field === "date") {
+      val = prompt("วันที่ (YYYY-MM-DD) 📅:", p.date || "");
+      if (val !== null) p.date = val.trim();
+    } else if (field === "priority") {
+      val = prompt("ความสำคัญ (ปกติ/สูง/ด่วนมาก) ⭐:", p.priority || "ปกติ");
+      if (val !== null) p.priority = val.trim();
+    } else if (field === "subject") {
+      val = prompt("วิชา/หมวด 🏷️:", p.subject || "");
+      if (val !== null) p.subject = val.trim();
+    } else if (field === "notes") {
+      val = prompt("โน้ต 📝:", p.notes || "");
+      if (val !== null) p.notes = val.trim();
+    }
+
+    save(); render();
+  });
+
+  /* ================== FILTERS & SORT ================== */
+  document.getElementById("clearFilters").addEventListener("click", () => {
+    qEl.value=""; fPriorityEl.value=""; fSubjectEl.value=""; sortEl.value="date-asc"; render();
+  });
+  qEl.addEventListener("input", render);
+  fPriorityEl.addEventListener("change", render);
+  fSubjectEl.addEventListener("input", render);
+  sortEl.addEventListener("change", render);
+
+  /* ================== EXPORT / IMPORT ================== */
+  exportBtn.addEventListener("click", () => {
+    const payload = { exportedAt: new Date().toISOString(), plans, meta };
+    const payloadStr = JSON.stringify(payload, null, 2);
+    const blob = new Blob([payloadStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "reading-plans.json";
+    document.body.appendChild(a); a.click();
+    a.remove(); URL.revokeObjectURL(url);
+  });
+
+  importFile.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || !Array.isArray(data.plans)) throw new Error("ไฟล์ไม่ถูกต้อง");
+        plans = data.plans;
+        meta = Object.assign({ streakDays: 0, lastReadDate: null }, data.meta || {});
+        save(); saveMeta(); render();
+        alert("นำเข้าข้อมูลเรียบร้อย 🎉");
+      } catch (err) {
+        alert("นำเข้าไม่สำเร็จ: " + err.message + " ❌");
+      } finally {
+        importFile.value = "";
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  });
+
+  /* ================== STREAK ================== */
+  function updateStreakIfRead(dateIso){
+    if (!dateIso) return;
+    const last = meta.lastReadDate;
+    const today = todayISO();
+    if (dateIso > today) return;
+    if (!last) { meta.streakDays = 1; meta.lastReadDate = dateIso; saveMeta(); return; }
+    if (dateIso === last) return;
+    const diffDays = dayDiff(last, dateIso);
+    if (diffDays === 1) meta.streakDays += 1;
+    else if (diffDays > 1) meta.streakDays = 1;
+    meta.lastReadDate = dateIso; saveMeta();
+  }
+
+  /* ================== SIDEBAR TOGGLE ================== */
+  const sidebarToggle = document.getElementById("sidebarToggle");
+  if (sidebarToggle) { sidebarToggle.addEventListener("click", () => { document.body.classList.toggle("sidebar-collapsed"); }); }
+
+  render();
+});
+</script>
+
+</body>
+</html>

@@ -331,3 +331,118 @@ function boot(){
   .catch(()=> { $('#mood').textContent = '❌ ไม่สามารถเข้าถึงกล้อง'; });
 }
 boot();
+// ==== เก็บข้อมูลเวลา ==== //
+function saveSession(subject, minutes) {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  let log = JSON.parse(localStorage.getItem("studyLog") || "{}");
+
+  if (!log[today]) log[today] = { subjects: {}, total: 0 };
+  log[today].total += minutes;
+
+  if (!log[today].subjects[subject]) log[today].subjects[subject] = 0;
+  log[today].subjects[subject] += minutes;
+
+  localStorage.setItem("studyLog", JSON.stringify(log));
+  updateCharts();
+  updateStreak();
+}
+
+// ==== Charts ==== //
+function updateCharts() {
+  const ctxWeek = document.getElementById("weeklyChart").getContext("2d");
+  const ctxMonth = document.getElementById("monthlyChart").getContext("2d");
+  const ctxSubject = document.getElementById("subjectChart").getContext("2d");
+
+  let log = JSON.parse(localStorage.getItem("studyLog") || "{}");
+  let days = Object.keys(log).sort();
+  let weekData = days.slice(-7).map(d => log[d].total);
+  let monthData = days.slice(-30).map(d => log[d].total);
+
+  // Weekly Chart
+  new Chart(ctxWeek, {
+    type: "bar",
+    data: {
+      labels: days.slice(-7),
+      datasets: [{ label: "นาที", data: weekData }]
+    }
+  });
+
+  // Monthly Chart
+  new Chart(ctxMonth, {
+    type: "line",
+    data: {
+      labels: days.slice(-30),
+      datasets: [{ label: "นาที", data: monthData }]
+    }
+  });
+
+  // Subject Chart (รวมล่าสุดทั้งหมด)
+  let subjects = {};
+  days.forEach(d => {
+    for (let s in log[d].subjects) {
+      if (!subjects[s]) subjects[s] = 0;
+      subjects[s] += log[d].subjects[s];
+    }
+  });
+
+  new Chart(ctxSubject, {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(subjects),
+      datasets: [{ data: Object.values(subjects) }]
+    }
+  });
+}
+
+// ==== Streak & Badge ==== //
+function updateStreak() {
+  let log = JSON.parse(localStorage.getItem("studyLog") || "{}");
+  let days = Object.keys(log).sort();
+
+  let streak = 0;
+  let today = new Date();
+  for (let i = 0; i < days.length; i++) {
+    let d = new Date(days[days.length - 1 - i]);
+    if ((today - d) / (1000 * 60 * 60 * 24) <= i) {
+      streak++;
+    } else break;
+  }
+
+  document.getElementById("streakCount").textContent = streak;
+
+  const badgeArea = document.getElementById("badgeArea");
+  badgeArea.innerHTML = "";
+  if (streak >= 7) badgeArea.innerHTML = "🏅 7 วันติดสุดยอด!";
+  if (streak >= 30) badgeArea.innerHTML = "🥇 30 วันติด Legend!";
+}
+
+// ==== Session Note ==== //
+document.getElementById("saveNoteBtn")?.addEventListener("click", () => {
+  const txt = document.getElementById("sessionNote").value;
+  if (!txt) return;
+  let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+  notes.push({ date: new Date().toLocaleString(), text: txt });
+  localStorage.setItem("notes", JSON.stringify(notes));
+  renderNotes();
+});
+
+function renderNotes() {
+  let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+  const list = document.getElementById("notesLog");
+  list.innerHTML = notes.map(n => `<li>[${n.date}] ${n.text}</li>`).join("");
+}
+
+// ==== Focus Mode เตือนถ้าออกแท็บ ==== //
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    new Audio("alert.mp3").play(); // ไฟล์เสียงเลือกได้
+    alert("⚠️ อย่าเพิ่งออก! โฟกัสต่ออีกนิด ✨");
+  }
+});
+
+// เรียก render ตอนโหลด
+window.addEventListener("load", () => {
+  updateCharts();
+  updateStreak();
+  renderNotes();
+});

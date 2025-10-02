@@ -343,6 +343,7 @@ body {
 .log li:hover { transform: translateX(4px); background: color-mix(in oklab, var(--soft) 70%, #fff); }
 
 /* ===== Calendar ===== */
+
 .calendar-box {
   background: var(--surface); padding: 18px;
   border-radius: var(--r-lg); box-shadow: var(--neu-in);
