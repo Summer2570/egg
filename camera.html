@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>โหมดกล้อง • นกโฟกัส (Eye Gaze)</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .cam-wrap{min-height:100vh; display:grid; grid-template-rows:auto 1fr auto; background:#0b1020; color:#e5e7eb}
+    .cam-header{display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08)}
+    .cam-title{font-size:18px; font-weight:700}
+    .hud{display:flex; gap:14px; align-items:center; color:#cbd5e1; font-size:14px; flex-wrap:wrap}
+    .chip{padding:6px 10px; border:1px solid rgba(255,255,255,.1); border-radius:999px}
+    .cam-main{display:grid; grid-template-columns: 1.2fr .8fr; gap:16px; padding:16px; align-items:center}
+    .video-box{position:relative; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.08); background:#111827; min-height:240px}
+    video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1)}
+    canvas#overlay{position:absolute; inset:0; pointer-events:none}
+    .bird-box{display:grid; gap:10px; place-items:center}
+    .bird-emoji{font-size:84px; line-height:1}
+    .bird-name{font-weight:700}
+    .mood{font-size:14px; color:#cbd5e1}
+    .controls{display:flex; gap:10px; justify-content:center; padding:14px 16px; flex-wrap:wrap}
+    .btn{padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:#fff; cursor:pointer; font-weight:600}
+    .btn.primary{background:#10b981; color:#fff; border-color:#10b981}
+    .btn.dark{background:#111827; color:#fff; border-color:#111827}
+    .legend{color:#9ca3af; font-size:13px; text-align:center; padding-bottom:12px}
+    .switcher label{margin-right:8px}
+    @media (max-width: 900px){
+      .cam-main{grid-template-columns: 1fr}
+    }
+  </style>
+  <!-- WebGazer eye-tracking (loaded lazily when chosen) -->
+  <script id="webgazerScript" data-loaded="false" src="" defer></script>
+</head>
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div class="cam-wrap">
+    <header class="cam-header">
+      <div class="cam-title">นกโฟกัส • กล้องจับสายตา</div>
+      <div class="hud">
+        <span class="chip">นก: <b id="birdLabel">Sparrow</b></span>
+        <span class="chip">โฟกัส: <b id="focusPct">0%</b></span>
+        <span class="chip">ธัญพืชรอบนี้: <b id="sessionSeeds">0</b></span>
+        <span class="chip">ธัญพืชรวม: <b id="totalSeeds">0</b></span>
+        <a class="chip" href="birdshop.html" style="text-decoration:none;color:#fff;border-color:#374151">ไปร้านนก</a>
+        <span class="chip switcher">
+          <label for="detector">Detector:</label>
+          <select id="detector">
+            <option value="gaze" selected>Eye Gaze (WebGazer)</option>
+            <option value="face">Face</option>
+            <option value="tab">Tab Only</option>
+          </select>
+        </span>
+      </div>
+    </header>
+
+    <main class="cam-main">
+      <section class="video-box">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="overlay"></canvas>
+      </section>
+
+      <aside class="bird-box">
+        <div class="bird-emoji" id="birdEmoji">🐦</div>
+        <div class="bird-name" id="birdName">Sparrow</div>
+        <div class="mood" id="birdMood">พร้อมเริ่ม</div>
+        <div class="legend">
+          กฎคะแนน: โฟกัสครบ <b>60 วินาที</b> จะได้ธัญพืช <b>+5</b><br/>
+          ถ้าหลุดโฟกัสเกิน 10 วิในนาทีหนึ่ง จะไม่ได้ธัญพืช<br/>
+          โซนโฟกัส = กึ่งกลางหน้าต่าง (±20% ของกว้าง/สูง) เมื่อเลือก Eye Gaze
+        </div>
+      </aside>
+    </main>
+
+    <footer class="controls">
+      <button class="btn dark" id="startCam">เปิดกล้อง</button>
+      <button class="btn primary" id="startFocus" disabled>เริ่มโฟกัส</button>
+      <button class="btn" id="stopFocus" disabled>หยุด</button>
+      <a href="index.html" class="btn">กลับหน้าโฟกัส</a>
+    </footer>
+  </div>
+
+  <script>
+    const toast = document.getElementById('toast');
+    function showToast(msg){ toast.textContent = msg; toast.classList.add('show'); setTimeout(()=> toast.classList.remove('show'), 1600); }
+
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    const ctx = overlay.getContext('2d');
+    const startCamBtn = document.getElementById('startCam');
+    const startFocusBtn = document.getElementById('startFocus');
+    const stopFocusBtn = document.getElementById('stopFocus');
+    const detectorSel = document.getElementById('detector');
+    const scriptTag = document.getElementById('webgazerScript');
+
+    const birdEmoji = document.getElementById('birdEmoji');
+    const birdName = document.getElementById('birdName');
+    const birdLabel = document.getElementById('birdLabel');
+    const birdMood = document.getElementById('birdMood');
+    const focusPct = document.getElementById('focusPct');
+    const sessionSeedsEl = document.getElementById('sessionSeeds');
+    const totalSeedsEl = document.getElementById('totalSeeds');
+
+    // Economy
+    const ECON_SEED_PER_MIN = 5;
+    const SEED_KEY = 'bird_seeds';
+    const INV_KEY = 'bird_inventory';
+    const ACTIVE_KEY = 'bird_active';
+
+    // Birds
+    const BIRDS = [
+      {id:'sparrow', name:'Sparrow', emoji:'🐦', price:0},
+      {id:'robin', name:'Robin', emoji:'🐤', price:50},
+      {id:'owl', name:'Owl', emoji:'🦉', price:120},
+      {id:'parrot', name:'Parrot', emoji:'🦜', price:200},
+      {id:'eagle', name:'Eagle', emoji:'🦅', price:350}
+    ];
+
+    function getSeeds(){ return parseInt(localStorage.getItem(SEED_KEY)||'0',10) }
+    function setSeeds(n){ localStorage.setItem(SEED_KEY, String(n)); totalSeedsEl.textContent = n; }
+    function getInv(){ return JSON.parse(localStorage.getItem(INV_KEY)||'[]') }
+    function setInv(a){ localStorage.setItem(INV_KEY, JSON.stringify(a)) }
+    function getActive(){ return localStorage.getItem(ACTIVE_KEY) || 'sparrow' }
+    function setActive(id){ localStorage.setItem(ACTIVE_KEY, id) }
+
+    // Ensure defaults
+    (function initEconomy(){
+      if(!localStorage.getItem(SEED_KEY)) setSeeds(0);
+      const inv = getInv();
+      if(inv.length === 0){ setInv(['sparrow']) }
+      const active = getActive();
+      const activeBird = BIRDS.find(b=>b.id===active) || BIRDS[0];
+      birdEmoji.textContent = activeBird.emoji;
+      birdName.textContent = activeBird.name;
+      birdLabel.textContent = activeBird.name;
+      totalSeedsEl.textContent = getSeeds();
+    })();
+
+    // Camera
+    let stream=null, running=false, secondTicker=null;
+    let focusSeconds=0, unfocusedInThisMinute=0, sessionSeeds=0;
+    let currentFocused=false;
+
+    async function openCam(){
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user' }, audio:false });
+        video.srcObject = stream;
+        await video.play();
+        resizeCanvas();
+        showToast('เปิดกล้องแล้ว');
+        startFocusBtn.disabled = false;
+      }catch(e){
+        showToast('ไม่สามารถเปิดกล้องได้');
+        console.error(e);
+      }
+    }
+
+    function resizeCanvas(){
+      overlay.width = video.videoWidth || overlay.clientWidth;
+      overlay.height = video.videoHeight || overlay.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    video.addEventListener('loadedmetadata', resizeCanvas);
+
+    // Face detection fallback
+    const hasFaceDetector = 'FaceDetector' in window;
+    let detector = null;
+    if(hasFaceDetector){
+      try{ detector = new FaceDetector({fastMode:true, maxDetectedFaces:1}) }catch(e){ detector = null }
+    }
+
+    async function detectFaceFrame(){
+      if(!running) return;
+      try{
+        ctx.clearRect(0,0,overlay.width, overlay.height);
+        let focused = document.visibilityState === 'visible';
+        if(detector){
+          const faces = await detector.detect(video);
+          if(faces && faces.length){
+            const f = faces[0].boundingBox;
+            ctx.strokeStyle = 'rgba(16,185,129,.9)';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(f.x, f.y, f.width, f.height);
+            const cx = f.x + f.width/2;
+            const cy = f.y + f.height/2;
+            const dx = Math.abs(cx - overlay.width/2) / overlay.width;
+            const dy = Math.abs(cy - overlay.height/2) / overlay.height;
+            const score = 1 - Math.min(1, (dx+dy));
+            focused = focused && score > 0.6;
+          } else {
+            focused = false;
+          }
+        }
+        updateMood(focused);
+        if(running) requestAnimationFrame(detectFaceFrame);
+      }catch(e){
+        updateMood(document.visibilityState === 'visible');
+        if(running) requestAnimationFrame(detectFaceFrame);
+      }
+    }
+
+    // Eye gaze via WebGazer
+    let webgazerReady=false, gazePts=[];
+    function loadWebGazer(){
+      return new Promise((resolve,reject)=>{
+        if(scriptTag.getAttribute('data-loaded')==='true') return resolve();
+        scriptTag.onload = ()=> resolve();
+        scriptTag.onerror = reject;
+        scriptTag.src = "https://unpkg.com/webgazer@2.1.0/dist/webgazer.min.js";
+        scriptTag.setAttribute('data-loaded','true');
+      })
+    }
+
+    async function startWebGazer(){
+      await loadWebGazer();
+      if(!window.webgazer) return;
+      await window.webgazer.setRegression('ridge')
+        .setGazeListener((data, ts)=>{
+          if(!data) return;
+          gazePts.push([data.x, data.y]);
+          if(gazePts.length>15) gazePts.shift();
+        })
+        .begin();
+      try{ webgazer.showVideo(false).showFaceOverlay(false).showFaceFeedbackBox(false); }catch(_){}
+      webgazerReady=true;
+    }
+
+    function stopWebGazer(){
+      try{ window.webgazer && window.webgazer.end() }catch(_){}
+      webgazerReady=false;
+      gazePts.length=0;
+    }
+
+    function avgGaze(){
+      if(gazePts.length===0) return null;
+      const s = gazePts.reduce((a,b)=>[a[0]+b[0], a[1]+b[1]],[0,0]);
+      return [s[0]/gazePts.length, s[1]/gazePts.length];
+    }
+
+    function detectGazeFrame(){
+      if(!running) return;
+      ctx.clearRect(0,0,overlay.width, overlay.height);
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const cx = vw/2, cy = vh/2;
+      const wx = vw*0.2, wy = vh*0.2;
+
+      // draw zone guide on overlay (relative to overlay, 40% zone)
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,.25)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect((overlay.width - overlay.width*0.4)/2, (overlay.height - overlay.height*0.4)/2, overlay.width*0.4, overlay.height*0.4);
+      ctx.restore();
+
+      let focused = document.visibilityState === 'visible';
+      const p = avgGaze();
+      if(p){
+        const gx = p[0], gy = p[1];
+        const rx = gx / vw * overlay.width;
+        const ry = gy / vh * overlay.height;
+        ctx.beginPath();
+        ctx.arc(rx, ry, 6, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(59,130,246,.9)';
+        ctx.fill();
+        const inZone = (Math.abs(gx - cx) <= wx) && (Math.abs(gy - cy) <= wy);
+        focused = focused && inZone;
+      } else {
+        focused = false;
+      }
+
+      updateMood(focused);
+      if(running) requestAnimationFrame(detectGazeFrame);
+    }
+
+    function updateMood(focused){
+      if(focused){
+        birdEmoji.textContent = getActiveEmoji();
+        birdMood.textContent = 'กำลังตั้งใจอ่าน 👍';
+      }else{
+        birdEmoji.textContent = '😠';
+        birdMood.textContent = 'หลุดโฟกัส! กลับมาอ่านกันเถอะ';
+      }
+      currentFocused = focused;
+    }
+
+    function getActiveEmoji(){
+      const id = getActive();
+      const b = BIRDS.find(x=>x.id===id) || BIRDS[0];
+      return b.emoji;
+    }
+
+    function startFocus(){
+      if(!stream){ showToast('กรุณาเปิดกล้องก่อน'); return; }
+      if(running) return;
+      running = true;
+      startFocusBtn.disabled = true;
+      stopFocusBtn.disabled = false;
+      focusSeconds = 0;
+      unfocusedInThisMinute = 0;
+      sessionSeeds = 0;
+      sessionSeedsEl.textContent = sessionSeeds;
+      showToast('เริ่มโฟกัสแล้ว');
+
+      secondTicker = setInterval(()=>{
+        focusSeconds++;
+        const pct = Math.round((focusSeconds % 60) / 60 * 100);
+        focusPct.textContent = pct + '%';
+        if(!currentFocused) unfocusedInThisMinute++;
+        if(focusSeconds % 60 === 0){
+          if(unfocusedInThisMinute <= 10){
+            sessionSeeds += ECON_SEED_PER_MIN;
+            setSeeds(getSeeds() + ECON_SEED_PER_MIN);
+            sessionSeedsEl.textContent = sessionSeeds;
+            showToast('🌾 +'+ECON_SEED_PER_MIN+' ธัญพืช');
+          } else {
+            showToast('⏱️ นาทีนี้ไม่ได้คะแนน (หลุดโฟกัสเกิน 10 วิ)');
+          }
+          unfocusedInThisMinute = 0;
+          focusPct.textContent = '0%';
+        }
+      }, 1000);
+
+      const mode = detectorSel.value;
+      if(mode === 'gaze'){
+        startWebGazer().then(()=> requestAnimationFrame(detectGazeFrame));
+      } else if(mode === 'face'){
+        requestAnimationFrame(detectFaceFrame);
+      } else {
+        (function tabLoop(){
+          if(!running) return;
+          const focused = document.visibilityState === 'visible';
+          updateMood(focused);
+          requestAnimationFrame(tabLoop);
+        })();
+      }
+    }
+
+    function stopFocus(){
+      running = false;
+      startFocusBtn.disabled = false;
+      stopFocusBtn.disabled = true;
+      clearInterval(secondTicker);
+      focusPct.textContent = '0%';
+      stopWebGazer();
+      showToast('หยุดโฟกัสแล้ว');
+    }
+
+    startCamBtn.addEventListener('click', openCam);
+    startFocusBtn.addEventListener('click', startFocus);
+    stopFocusBtn.addEventListener('click', stopFocus);
+
+    window.addEventListener('keydown', (e)=>{
+      if(e.code === 'Space'){
+        e.preventDefault();
+        running ? stopFocus() : startFocus();
+      }
+    });
+  </script>
+</body>
+</html>

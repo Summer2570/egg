@@ -5,19 +5,72 @@
     <title>StudyBoard — Minimal Focus Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styledas.css" />
-    
   </head>
-  <body>
-    <main class="main">
-      <!-- Topbar -->
-      <header class="topbar">
-        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme">🌓</button>
-        <div class="user-actions">
-          <img src="โปร.jpg" alt="Profile" class="avatar" />
-          <button class="btn danger tiny" type="button" id="logoutBtn">Logout</button>
-        </div>
-      </header>
+  <body class="has-sidebar">
+    <aside class="sidebar" aria-label="แถบเมนูด้านข้าง">
+      <!-- ปุ่มย่อ/ขยาย -->
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+    
+      <!-- ===== จัดระเบียบสองส่วนนี้ ===== -->
+      <div class="sidebar-tools">
+        <!-- 1) ปุ่มสลับธีม -->
+        <button class="menu-btn theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme">
+          <span class="icon">🌓</span>
+          <span class="label">สลับธีม</span>
+        </button>
+    
+        <!-- 2) โปรไฟล์ + Logout -->
+        
+      <!-- ===== จบสองส่วน ===== -->
+    
+      <div class="sidebar-title">แผนงาน</div>
+<ul class="menu">
+  <li class="menu-item">
+    <button class="menu-btn" data-href="dashboard.html">
+      <span class="icon">🏠</span>
+      <span class="label">หน้าแรก</span>
+    </button>
+  </li>
 
+  <li class="menu-item">
+    <button class="menu-btn" data-href="plan.html">
+      <span class="icon">🗒️</span>
+      <span class="label">ที่วางแผนไว้</span>
+    </button>
+  </li>
+
+  <li class="menu-item">
+    <button class="menu-btn" data-href="done.html">
+      <span class="icon">✅</span>
+      <span class="label">สำเร็จเสร็จสิ้น</span>
+    </button>
+  </li>
+
+  <li class="menu-sep"></li>
+
+  <li class="menu-item add">
+    <button class="btn tiny success menu-btn" data-href="new-plan.html">
+      <span class="icon">➕</span>
+      <span class="label">เพิ่มแผนงาน</span>
+    </button>
+  </li>
+  <div class="sidebar-profile">
+    <img src="โปร.jpg" alt="Profile" class="avatar" />
+    <div class="profile-meta">
+      <div class="profile-name">My Profile</div>
+      <div class="profile-sub">พร้อมลุยวันนี้ ✨</div>
+    </div>
+  </div>
+          <button class="icon-btn logout-icon" id="logoutBtn" title="ออกจากระบบ" aria-label="Logout">🚪</button>
+        </div>
+      </div>
+      </ul>
+    </aside>
+    
+    
+    
+    <main class="main">
+    
       <div class="container">
         <!-- KPIs -->
         <section class="stats" aria-label="Focus statistics">
@@ -34,7 +87,6 @@
             <article class="card">
               <div class="card-head"><h2>🦜 Focus Mode</h2></div>
 
-              
               <div class="opt" id="modeSwitch">
                 <label style="min-width: 92px;">โหมด:</label>
                 <div class="seg">
@@ -60,7 +112,7 @@
                 </select>
               </div>
 
-              <!-- Pomodoro Controls (เวอร์ชันตั้งค่าลึก – เก็บไว้ใช้ได้) -->
+              <!-- Pomodoro Controls -->
               <div class="opt" id="pomoControls">
                 <label><input type="checkbox" id="pomoEnable" /> ใช้โหมด Pomodoro</label>
                 <button class="btn tiny" type="button" id="pomoSettings">⚙️ ตั้งค่า</button>
@@ -101,12 +153,11 @@
                   <div class="hint">Progress toward daily goal (2h)</div>
                 </div>
               </div>
-              
+
               <!-- เวลาสะสม -->
               <div class="log">
                 <h3>📊 เวลาสะสมต่อวิชา</h3>
                 <ul id="subjectLog"></ul>
-                <!-- (ถ้ามีกราฟ) <canvas id="subjectChart" height="200"></canvas> -->
               </div>
             </article>
           </div>
@@ -137,41 +188,52 @@
       </div>
     </main>
 
-   <!-- ✅ Logout -->
-<script>
-  (function () {
-    const btn = document.getElementById("logoutBtn");
-    if (!btn) return;
+    <!-- ✅ ทำให้ปุ่มใน Sidebar พาไปยังหน้าใน data-href -->
+    <script>
+      document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.menu-btn');
+        if (!btn) return;
+        const href = btn.getAttribute('data-href');
+        if (href) window.location.href = href;
+      });
+    </script>
 
-    btn.addEventListener("click", () => {
-      try {
-        // เก็บธีมไว้ก่อน (จะได้ไม่หายหลัง logout)
-        const theme =
-          localStorage.getItem("theme") ||
-          document.documentElement.getAttribute("data-theme");
+    <!-- ✅ Toggle ย่อ/ขยาย Sidebar -->
+    <script>
+      (function(){
+        const sidebar  = document.querySelector('.sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        toggleBtn?.addEventListener('click', () => {
+          sidebar.classList.toggle('collapsed');
+          document.body.classList.toggle('sidebar-collapsed');
+        });
+      })();
+    </script>
 
-        // ลบ session/localStorage เดิม
-        localStorage.clear();
-        sessionStorage.clear();
+    <!-- ✅ Logout -->
+    <script>
+      (function () {
+        const btn = document.getElementById("logoutBtn");
+        if (!btn) return;
+        btn.addEventListener("click", () => {
+          try {
+            const theme =
+              localStorage.getItem("theme") ||
+              document.documentElement.getAttribute("data-theme");
+            localStorage.clear();
+            sessionStorage.clear();
+            if (theme) {
+              localStorage.setItem("theme", theme);
+              document.documentElement.setAttribute("data-theme", theme);
+            }
+          } catch (e) { console.warn("Logout clear storage warning:", e); }
+          window.location.href = "login.html";
+        });
+      })();
+    </script>
 
-        // คืนค่าธีมกลับ
-        if (theme) {
-          localStorage.setItem("theme", theme);
-          document.documentElement.setAttribute("data-theme", theme);
-        }
-      } catch (e) {
-        console.warn("Logout clear storage warning:", e);
-      }
-
-      // ✅ เปลี่ยนจาก signup.html → login.html
-      window.location.href = "login.html";
-    });
-  })();
-</script>
-
-<!-- โหลดสคริปต์: Chart.js (ถ้าใช้กราฟ) ก่อน และ dashboard.js ทีเดียวเท่านั้น -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="dashboard.js"></script>
-</body>
+    <!-- โหลดสคริปต์: Chart.js (ถ้าใช้กราฟ) ก่อน และ dashboard.js ทีเดียวเท่านั้น -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="dashboard.js"></script>
+  </body>
 </html>
-

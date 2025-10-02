@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Account</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <main class="wrap">
+    <section class="panel">
+      <h1 class="title">บัญชีผู้ใช้</h1>
+      <p class="muted">ข้อมูลผู้ใช้ที่เข้าสู่ระบบ</p>
+
+      <div id="info" class="grid" style="margin-bottom:10px">
+        <div class="field">
+          <span class="label">ชื่อ</span>
+          <input class="input" id="name" type="text" placeholder="Your name" />
+        </div>
+        <div class="field">
+          <span class="label">อีเมล</span>
+          <input class="input" id="email" type="email" disabled />
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap:10px; margin:10px 0 18px;">
+        <button id="save" class="btn primary">บันทึกโปรไฟล์</button>
+        <a href="index.html" class="btn" style="text-align:center;display:inline-block">กลับหน้าโฟกัส</a>
+      </div>
+
+      <div class="grid" style="margin-top:8px">
+        <div class="field">
+          <span class="label">สถิติโดยสรุป</span>
+          <div class="muted" id="stats">กำลังโหลด…</div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+        <a href="reset.html?email=" id="changePwd" class="btn-ghost">เปลี่ยนรหัสผ่าน</a>
+        <a href="#" id="logout" style="color:#d00;text-decoration:none">ออกจากระบบ</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const toast = document.getElementById("toast");
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(()=> toast.classList.remove("show"), 1600);
+    }
+
+    const current = JSON.parse(localStorage.getItem("currentUser") || "null");
+    if(!current){
+      // ถ้าไม่ได้ล็อกอิน ให้ไปหน้าเข้าสู่ระบบ
+      window.location.href = "signin.html";
+    }
+
+    const nameEl = document.getElementById("name");
+    const emailEl = document.getElementById("email");
+    const statsEl = document.getElementById("stats");
+    const logoutEl = document.getElementById("logout");
+    const saveEl = document.getElementById("save");
+    const changePwd = document.getElementById("changePwd");
+
+    // เติมข้อมูลผู้ใช้
+    nameEl.value = current?.name || "";
+    emailEl.value = current?.email || "";
+    changePwd.href = "reset.html?email=" + encodeURIComponent(current?.email || "");
+
+    // สถิติแบบง่ายจาก sessions (รวมทุกคนในอุปกรณ์นี้)
+    try{
+      const sessions = JSON.parse(localStorage.getItem("mf_sessions") || "[]");
+      const totalMin = sessions.reduce((a,b)=> a + (b?.minutes||0), 0);
+      const h = Math.floor(totalMin/60), m = totalMin%60;
+      statsEl.textContent = `โฟกัสรวมทั้งหมด: ${h} ชั่วโมง ${m} นาที (${sessions.length} รอบ)`;
+    }catch(e){
+      statsEl.textContent = "ไม่มีข้อมูลสถิติ";
+    }
+
+    // บันทึกโปรไฟล์ (อัปเดต name ทั้งใน users และ currentUser)
+    saveEl.addEventListener("click", ()=>{
+      const name = nameEl.value.trim();
+      const email = (current?.email || "").toLowerCase();
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const idx = users.findIndex(u => u.email === email);
+      if(idx !== -1){
+        users[idx].name = name;
+        localStorage.setItem("users", JSON.stringify(users));
+      }
+      localStorage.setItem("currentUser", JSON.stringify({ name, email }));
+      showToast("✅ บันทึกโปรไฟล์เรียบร้อย");
+    });
+
+    // ออกจากระบบ
+    logoutEl.addEventListener("click", (e)=>{
+      e.preventDefault();
+      localStorage.removeItem("currentUser");
+      window.location.href = "signin.html";
+    });
+  </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 /* ============================
-   Dashboard.js — Focus + Pomodoro + EyeTracking (revised)
+   Dashboard.js — Focus + Pomodoro + EyeTracking + SidebarNav
    ============================ */
 
 /* ---------- DOM ---------- */
@@ -258,15 +258,10 @@ document.getElementById("logoutBtn")?.addEventListener("click",()=>{
   window.location.href = "index.html";
 });
 
-/* ===== Eye Tracking with face-api.js =====
-   HTML ต้องมี: <video id="cameraFeed"></video> และ <div id="eyeStatus"></div>
-   และ <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
-   👉 เสิร์ฟผ่าน http://localhost ไม่ใช่ file:// เพื่อหลีกเลี่ยง CORS
-================================================ */
+/* ===== Eye Tracking with face-api.js ===== */
 const cam = document.getElementById("cameraFeed");
 const eyeStatus = document.getElementById("eyeStatus");
 
-// --- helper: ลองหลาย path สำหรับโมเดล (รองรับ /models, ./models, models) ---
 async function tryLoadFrom(bases){
   for(const base of bases){
     try{
@@ -275,19 +270,16 @@ async function tryLoadFrom(bases){
         faceapi.nets.faceLandmark68Net.loadFromUri(base),
         faceapi.nets.faceExpressionNet.loadFromUri(base),
       ]);
-      return base; // success path
-    }catch(_e){/* try next */}
+      return base; 
+    }catch(_e){}
   }
   throw new Error("ไม่พบโมเดลในเส้นทางที่ระบุ");
 }
-
 async function loadFaceModels(){
   const bases = ["/models","./models","models"];
   const okBase = await tryLoadFrom(bases);
   console.log("face-api.js models loaded from:", okBase);
 }
-
-// ให้ภาพขึ้นทันที แม้โมเดลยังไม่พร้อม
 async function openCamera() {
   if (!cam) throw new Error("camera element not found");
   try {
@@ -306,26 +298,18 @@ async function openCamera() {
     return false;
   }
 }
-
 function startEyeLoop() {
   let last = performance.now();
   let absentMs = 0;
-
   async function tick(now) {
     const dt = now - last; last = now;
-
     if (!cam || cam.readyState < 2 || cam.videoWidth === 0) {
       requestAnimationFrame(tick);
       return;
     }
-
     const det = await faceapi
-      .detectSingleFace(
-        cam,
-        new faceapi.TinyFaceDetectorOptions({ inputSize: 256, scoreThreshold: 0.5 })
-      )
+      .detectSingleFace(cam,new faceapi.TinyFaceDetectorOptions({ inputSize: 256, scoreThreshold: 0.5 }))
       .withFaceLandmarks();
-
     if (det) {
       absentMs = 0;
       eyeStatus && (eyeStatus.textContent = "✅ กำลังอ่าน");
@@ -335,26 +319,22 @@ function startEyeLoop() {
       eyeStatus && (eyeStatus.textContent = "⏸️ ไม่เจอสายตา");
       if (absentMs > 2000 && typeof pauseTimer === "function" && isRunning) pauseTimer();
     }
-
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
 }
-
-// --- NEW: ลำดับเริ่มต้นให้กล้องขึ้นก่อน แล้วค่อยโหลดโมเดล ---
 (async function initEyeTracking(){
   try{
     if(!cam || !eyeStatus) return;
     eyeStatus.textContent = "🎥 เปิดกล้อง...";
-    await openCamera(); // ให้ภาพขึ้นที่กรอบบนทันที
-
+    await openCamera();
     eyeStatus.textContent = "⏳ กำลังโหลดโมเดล...";
     try{
       await loadFaceModels();
       eyeStatus.textContent = "👀 พร้อมตรวจจับ";
       startEyeLoop();
     }catch(modelErr){
-      console.warn("โหลดโมเดลไม่สำเร็จ แต่กล้องใช้งานได้:", modelErr);
+      console.warn("โหลดโมเดลไม่สำเร็จ:", modelErr);
       eyeStatus.textContent = "⚠️ กล้องทำงาน แต่โหลดโมเดลไม่สำเร็จ (ตรวจจับปิด)";
     }
   }catch(e){
@@ -363,33 +343,22 @@ function startEyeLoop() {
   }
 })();
 
-(function enableSwapIfPresent(){
-  const preview = document.getElementById('previewVideo');
-  const btn = document.getElementById('swapStreamBtn');
-  if(!preview || !btn || !cam) return;
-  btn.addEventListener('click', ()=>{
-    const s1 = cam.srcObject; const s2 = preview.srcObject;
-    cam.srcObject = s2; preview.srcObject = s1;
-    cam.play?.(); preview.play?.();
+/* ---------- Sidebar Navigation ---------- */
+(function sidebarNav() {
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.menu-btn');
+    if (!btn) return;
+    const href = btn.getAttribute('data-href') || btn.getAttribute('href');
+    if (href) window.location.href = href;
   });
-})();
 
-/* --- DEBUG flag: ปิดวิดีโอล่างที่เคยใช้ทดสอบ --- */
-const DEBUG_SHOW_EXTRA_VIDEO = false; // <- เปลี่ยนเป็น true ถ้าต้องการ
-(async function testCamera(){
-  if(!DEBUG_SHOW_EXTRA_VIDEO) return; // ไม่สร้างวิดีโอล่างอีกต่อไป
-  const video = document.createElement('video');
-  video.style.width = "640px";
-  video.style.height = "480px";
-  video.style.border = "1px solid black";
-  document.body.appendChild(video);
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
-    await video.play();
-    console.log("Camera is working (debug)");
-  } catch (error) {
-    console.error("Error accessing camera (debug):", error);
-  }
+  const currentPage = window.location.pathname.split("/").pop();
+  document.querySelectorAll('.menu-btn').forEach(btn => {
+    const href = btn.getAttribute('data-href') || btn.getAttribute('href');
+    if (href && href === currentPage) {
+      btn.classList.add('is-active');
+    } else {
+      btn.classList.remove('is-active');
+    }
+  });
 })();

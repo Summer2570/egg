@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <title>ที่วางแผนไว้ — StudyBoard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styledas.css" />
+</head>
+<body class="has-sidebar">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" aria-label="แถบเมนูด้านข้าง">
+    <!-- ปุ่มย่อ/ขยาย -->
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+    
+    <!-- Tools: Theme + Profile -->
+    <div class="sidebar-tools">
+      <!-- ปุ่มสลับธีม -->
+      <button class="menu-btn theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme">
+        <span class="icon">🌓</span>
+        <span class="label">สลับธีม</span>
+      </button>
+
+      <!-- โปรไฟล์ + Logout -->
+      <div class="sidebar-profile">
+        <img src="โปร.jpg" alt="Profile" class="avatar" />
+        <div class="profile-meta">
+          <div class="profile-name">My Profile</div>
+          <div class="profile-sub">พร้อมลุยวันนี้ ✨</div>
+        </div>
+        <button class="icon-btn logout-icon" id="logoutBtn" title="ออกจากระบบ" aria-label="Logout">🚪</button>
+      </div>
+    </div>
+
+    <!-- เมนูหลัก -->
+    <div class="sidebar-title">แผนงาน</div>
+    <ul class="menu">
+      <li class="menu-item">
+        <button class="menu-btn" data-href="dashboard.html">
+          <span class="icon">🏠</span>
+          <span class="label">หน้าแรก</span>
+        </button>
+      </li>
+
+      <li class="menu-item">
+        <button class="menu-btn" data-href="plan.html">
+          <span class="icon">🗒️</span>
+          <span class="label">ที่วางแผนไว้</span>
+        </button>
+      </li>
+
+      <li class="menu-item">
+        <button class="menu-btn" data-href="done.html">
+          <span class="icon">✅</span>
+          <span class="label">สำเร็จเสร็จสิ้น</span>
+        </button>
+      </li>
+
+      <li class="menu-sep"></li>
+
+      <li class="menu-item add">
+        <button class="btn tiny success menu-btn" data-href="new-plan.html">
+          <span class="icon">➕</span>
+          <span class="label">เพิ่มแผนงาน</span>
+        </button>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header class="topbar">
+      <h1>📌 ที่วางแผนไว้</h1>
+    </header>
+
+    <div class="container">
+      <!-- เพิ่มแผนใหม่ -->
+      <section class="card add-plan">
+        <h2>➕ เพิ่มแผนใหม่</h2>
+        <div class="opt">
+          <input type="text" id="planTitle" placeholder="ชื่อแผนงาน..." />
+          <input type="date" id="planDate" />
+          <button class="btn success tiny" id="addPlanBtn">บันทึก</button>
+        </div>
+      </section>
+
+      <!-- รายการแผนงาน -->
+      <section class="card">
+        <h2>📋 รายการแผนงาน</h2>
+        <ul class="plan-list" id="planList">
+          <!-- ตัวอย่าง item -->
+          <li class="plan-item">
+            <div class="plan-info">
+              <span class="plan-title">อ่านบทที่ 5 วิชาคณิต</span>
+              <span class="plan-date">กำหนดส่ง: 2025-10-10</span>
+            </div>
+            <div class="plan-actions">
+              <button class="btn tiny">✏️</button>
+              <button class="btn tiny success">✅</button>
+              <button class="btn tiny danger">🗑️</button>
+            </div>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <script src="planned.js"></script>
+</body>
+</html>
